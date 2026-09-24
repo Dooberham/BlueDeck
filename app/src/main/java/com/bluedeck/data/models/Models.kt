@@ -357,7 +357,7 @@ data class EVStatus(
     @SerializedName("remainTime2") val remainTime2: RemainTime2? = null,
     @SerializedName(
         value = "chargingPower",
-        alternate = ["chargePower", "chargePwr", "chargingSpeed", "chargeSpeed", "realTimePower", "power"]
+        alternate = ["chargePower", "chargePwr", "chargingSpeed", "chargeSpeed", "realTimePower", "power", "batteryStndChrgPower","batteryFstChrgPower"]
     ) val chargingPowerKw: Double? = null,
     @SerializedName("drvDistance") val drvDistance: List<DriveDistance> = emptyList(),
     @SerializedName("reservChargeInfos") val reservChargeInfos: ReservChargeInfos? = null,

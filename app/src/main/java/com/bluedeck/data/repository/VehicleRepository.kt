@@ -641,7 +641,14 @@ class VehicleRepository @Inject constructor(
         }
 
         normalizeRangeValue(status.objectOrNull("dte"))
-        val distances = status.objectOrNull("evStatus")?.arrayOrNull("drvDistance")
+        val evStatus = status.objectOrNull("evStatus")
+        if (evStatus != null) {
+            evStatus.objectOrNull("batteryPower")?.let { powerObj ->
+                powerObj.get("batteryStndChrgPower")?.let { evStatus.add("batteryStndChrgPower", it.deepCopy()) }
+                powerObj.get("batteryFstChrgPower")?.let { evStatus.add("batteryFstChrgPower", it.deepCopy()) }
+            }
+        }
+        val distances = evStatus?.arrayOrNull("drvDistance")
         distances?.forEach { entry ->
             val rangeByFuel = entry.takeIfJsonObject()?.objectOrNull("rangeByFuel")
             normalizeRangeValue(rangeByFuel?.objectOrNull("totalAvailableRange"))
@@ -861,9 +868,12 @@ class VehicleRepository @Inject constructor(
 
     private fun isCanadaAuthFailure(code: Int, json: JsonObject?): Boolean {
         if (code == 401 || code == 403) return true
-        val errorCode = json?.objectOrNull("error")?.stringOrNull("errorCode").orEmpty()
-        // 7403 = auth expired, 7404 = bad credentials, 7602 = access token deleted.
-        return errorCode == "7403" || errorCode == "7404" || errorCode == "7602"
+        val errorObj = json?.objectOrNull("error")
+        val errorCode = errorObj?.stringOrNull("errorCode").orEmpty()
+        val errorDesc = errorObj?.stringOrNull("errorDesc").orEmpty()
+        // 7403 = auth expired, 7404 = bad credentials, 7602 = access token deleted, 7606 = IP validation failed.
+        return errorCode == "7403" || errorCode == "7404" || errorCode == "7602" || errorCode == "7606"
+            || errorDesc.contains("IP Validation failed", ignoreCase = true)
     }
 
     private suspend fun refreshCanadaAccessToken(): String {
